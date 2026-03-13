@@ -216,5 +216,6 @@ export class ObsidianConfluenceClient
 	space = new Api.Space(this);
 	contentAttachments = new Api.ContentAttachments(this);
 	contentLabels = new Api.ContentLabels(this);
+	// @ts-expect-error — Api.Users exists at runtime but is missing from confluence.js type declarations
 	users = new Api.Users(this);
 }
