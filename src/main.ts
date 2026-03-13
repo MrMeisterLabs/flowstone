@@ -30,6 +30,7 @@ export interface ObsidianPluginSettings
 		| "neutral"
 		| "dark"
 		| "forest";
+	authType: "basic" | "bearer";
 }
 
 interface FailedFile {
@@ -43,7 +44,7 @@ interface UploadResults {
 	filesUploadResult: UploadAdfFileResult[];
 }
 
-export default class ConfluencePlugin extends Plugin {
+export default class FlowStonePlugin extends Plugin {
 	settings!: ObsidianPluginSettings;
 	private isSyncing = false;
 	workspace!: Workspace;
@@ -65,28 +66,51 @@ export default class ConfluencePlugin extends Plugin {
 			this.app,
 		);
 
-		const mermaidItems = await this.getMermaidItems();
-		const mermaidRenderer = new ElectronMermaidRenderer(
-			mermaidItems.extraStyleSheets,
-			mermaidItems.extraStyles,
-			mermaidItems.mermaidConfig,
-			mermaidItems.bodyStyles,
-		);
+		const extraPlugins: MermaidRendererPlugin[] = [];
+		try {
+			const mermaidItems = await this.getMermaidItems();
+			const mermaidRenderer = new ElectronMermaidRenderer(
+				mermaidItems.extraStyleSheets,
+				mermaidItems.extraStyles,
+				mermaidItems.mermaidConfig,
+				mermaidItems.bodyStyles,
+			);
+			extraPlugins.push(new MermaidRendererPlugin(mermaidRenderer));
+		} catch (e) {
+			console.warn(
+				"FlowStone: Mermaid renderer unavailable, diagrams will be skipped.",
+				e,
+			);
+			new Notice(
+				"FlowStone: Mermaid diagram rendering is unavailable in this environment and will be skipped.",
+			);
+		}
+
+		const authentication =
+			this.settings.authType === "bearer"
+				? { personalAccessToken: this.settings.atlassianApiToken }
+				: {
+						basic: {
+							email: this.settings.atlassianUserName,
+							apiToken: this.settings.atlassianApiToken,
+						},
+					};
+
 		const confluenceClient = new ObsidianConfluenceClient({
 			host: this.settings.confluenceBaseUrl,
-			authentication: {
-				basic: {
-					email: this.settings.atlassianUserName,
-					apiToken: this.settings.atlassianApiToken,
-				},
-			},
+			authentication,
 			middlewares: {
 				onError(e) {
-					if ("response" in e && "data" in e.response) {
+					if (
+						"response" in e &&
+						e.response != null &&
+						"data" in (e.response as object)
+					) {
+						const response = e.response as { data: unknown };
 						e.message =
-							typeof e.response.data === "string"
-								? e.response.data
-								: JSON.stringify(e.response.data);
+							typeof response.data === "string"
+								? response.data
+								: JSON.stringify(response.data);
 					}
 				},
 			},
@@ -97,7 +121,7 @@ export default class ConfluencePlugin extends Plugin {
 			this.adaptor,
 			settingsLoader,
 			confluenceClient,
-			[new MermaidRendererPlugin(mermaidRenderer)],
+			extraPlugins,
 		);
 	}
 
@@ -199,9 +223,17 @@ export default class ConfluencePlugin extends Plugin {
 	}
 
 	override async onload() {
-		await this.init();
+		try {
+			await this.init();
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			console.error("FlowStone: Failed to initialize.", e);
+			new Notice(
+				`FlowStone: Failed to initialize — ${msg}. Check settings and reload.`,
+			);
+		}
 
-		this.addRibbonIcon("cloud", "Publish to Confluence", async () => {
+		this.addRibbonIcon("cloud", "FlowStone: Publish to Confluence", async () => {
 			if (this.isSyncing) {
 				new Notice("Syncing already on going");
 				return;
@@ -247,12 +279,18 @@ export default class ConfluencePlugin extends Plugin {
 
 				const confluenceClient = new ObsidianConfluenceClient({
 					host: this.settings.confluenceBaseUrl,
-					authentication: {
-						basic: {
-							email: this.settings.atlassianUserName,
-							apiToken: this.settings.atlassianApiToken,
-						},
-					},
+					authentication:
+						this.settings.authType === "bearer"
+							? {
+									personalAccessToken:
+										this.settings.atlassianApiToken,
+								}
+							: {
+									basic: {
+										email: this.settings.atlassianUserName,
+										apiToken: this.settings.atlassianApiToken,
+									},
+								},
 				});
 				const testingPage =
 					await confluenceClient.content.getContentById({
@@ -489,7 +527,7 @@ export default class ConfluencePlugin extends Plugin {
 		this.settings = Object.assign(
 			{},
 			ConfluenceUploadSettings.DEFAULT_SETTINGS,
-			{ mermaidTheme: "match-obsidian" },
+			{ mermaidTheme: "match-obsidian", authType: "basic" },
 			await this.loadData(),
 		);
 	}

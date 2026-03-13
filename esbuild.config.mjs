@@ -40,7 +40,7 @@ const buildConfig = {
 	logLevel: "info",
 	sourcemap: prod ? false : 'inline',
 	treeShaking: true,
-	outdir: prod ? 'dist' : '../../dev-vault/.obsidian/plugins/obsidian-confluence',
+	outdir: prod ? 'dist' : '../../dev-vault/.obsidian/plugins/flowstone',
 	mainFields: ['module', 'main'],
 	minify: true,
 	metafile: true,

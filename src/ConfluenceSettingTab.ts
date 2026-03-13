@@ -1,10 +1,10 @@
 import { App, Setting, PluginSettingTab } from "obsidian";
-import ConfluencePlugin from "./main";
+import FlowStonePlugin from "./main";
 
 export class ConfluenceSettingTab extends PluginSettingTab {
-	plugin: ConfluencePlugin;
+	plugin: FlowStonePlugin;
 
-	constructor(app: App, plugin: ConfluencePlugin) {
+	constructor(app: App, plugin: FlowStonePlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -15,7 +15,7 @@ export class ConfluenceSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		containerEl.createEl("h2", {
-			text: "Settings for connecting to Atlassian Confluence",
+			text: "FlowStone — Confluence Connection Settings",
 		});
 
 		new Setting(containerEl)
@@ -32,21 +32,47 @@ export class ConfluenceSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Atlassian Username")
-			.setDesc('eg "username@domain.com"')
-			.addText((text) =>
-				text
-					.setPlaceholder("username@domain.com")
-					.setValue(this.plugin.settings.atlassianUserName)
+			.setName("Authentication Type")
+			.setDesc(
+				"Basic: Confluence Cloud (email + API token). Bearer: Confluence Server/Data Center (Personal Access Token).",
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOptions({ basic: "Basic (Cloud)", bearer: "Bearer (Server / Data Center)" })
+					.setValue(this.plugin.settings.authType)
 					.onChange(async (value) => {
-						this.plugin.settings.atlassianUserName = value;
+						this.plugin.settings.authType = value as "basic" | "bearer";
 						await this.plugin.saveSettings();
+						this.display();
 					}),
 			);
 
+		if (this.plugin.settings.authType === "basic") {
+			new Setting(containerEl)
+				.setName("Atlassian Username")
+				.setDesc('eg "username@domain.com"')
+				.addText((text) =>
+					text
+						.setPlaceholder("username@domain.com")
+						.setValue(this.plugin.settings.atlassianUserName)
+						.onChange(async (value) => {
+							this.plugin.settings.atlassianUserName = value;
+							await this.plugin.saveSettings();
+						}),
+				);
+		}
+
 		new Setting(containerEl)
-			.setName("Atlassian API Token")
-			.setDesc("")
+			.setName(
+				this.plugin.settings.authType === "bearer"
+					? "Personal Access Token"
+					: "Atlassian API Token",
+			)
+			.setDesc(
+				this.plugin.settings.authType === "bearer"
+					? "Generate a PAT in Confluence under Profile → Personal Access Tokens."
+					: "Generate an API token at id.atlassian.com/manage-profile/security/api-tokens.",
+			)
 			.addText((text) =>
 				text
 					.setPlaceholder("")
