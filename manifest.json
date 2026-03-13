@@ -1,10 +1,10 @@
 {
-	"id": "confluence-integration",
-	"name": "Confluence Integration",
+	"id": "flowstone",
+	"name": "FlowStone",
 	"version": "5.5.2",
 	"minAppVersion": "1.0.0",
-	"description": "This plugin allows you to publish your notes to Confluence",
-	"author": "andymac4182",
-	"authorUrl": "https://github.com/andymac4182",
+	"description": "Sync and publish your Obsidian notes to Confluence",
+	"author": "MrMeisterLabs",
+	"authorUrl": "https://github.com/MrMeisterLabs",
 	"isDesktopOnly": true
 }

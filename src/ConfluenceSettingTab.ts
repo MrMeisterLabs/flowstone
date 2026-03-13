@@ -1,10 +1,10 @@
 import { App, Setting, PluginSettingTab } from "obsidian";
-import ConfluencePlugin from "./main";
+import FlowStonePlugin from "./main";
 
 export class ConfluenceSettingTab extends PluginSettingTab {
-	plugin: ConfluencePlugin;
+	plugin: FlowStonePlugin;
 
-	constructor(app: App, plugin: ConfluencePlugin) {
+	constructor(app: App, plugin: FlowStonePlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -15,7 +15,7 @@ export class ConfluenceSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		containerEl.createEl("h2", {
-			text: "Settings for connecting to Atlassian Confluence",
+			text: "FlowStone — Confluence Connection Settings",
 		});
 
 		new Setting(containerEl)

@@ -44,7 +44,7 @@ interface UploadResults {
 	filesUploadResult: UploadAdfFileResult[];
 }
 
-export default class ConfluencePlugin extends Plugin {
+export default class FlowStonePlugin extends Plugin {
 	settings!: ObsidianPluginSettings;
 	private isSyncing = false;
 	workspace!: Workspace;
@@ -233,7 +233,7 @@ export default class ConfluencePlugin extends Plugin {
 			);
 		}
 
-		this.addRibbonIcon("cloud", "Publish to Confluence", async () => {
+		this.addRibbonIcon("cloud", "FlowStone: Publish to Confluence", async () => {
 			if (this.isSyncing) {
 				new Notice("Syncing already on going");
 				return;
